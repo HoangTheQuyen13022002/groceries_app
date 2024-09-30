@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:groceries_app/constants/colors.dart';
+import 'package:groceries_app/providers/cart_provider.dart';
+import 'package:groceries_app/providers/category_provider.dart';
 import 'package:groceries_app/providers/favorite_provider.dart';
 import 'package:groceries_app/providers/product_provider.dart';
 import 'package:groceries_app/screens/auth/login_screens.dart';
@@ -28,6 +30,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProviders()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => FavoriteProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

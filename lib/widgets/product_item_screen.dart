@@ -1,9 +1,15 @@
+import 'dart:math';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:groceries_app/constants/colors.dart';
 import 'package:groceries_app/models/product.dart';
+import 'package:groceries_app/providers/cart_provider.dart';
 import 'package:groceries_app/widgets/navigator.dart';
+import 'package:provider/provider.dart';
 
+import '../models/cart.dart';
 import '../screens/detail/product_detail.dart';
 
 class ProductItemScreen extends StatefulWidget {
@@ -19,6 +25,7 @@ class _ProductItemScreenState extends State<ProductItemScreen> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
+    User? user = FirebaseAuth.instance.currentUser;
     return GestureDetector(
       onTap: (){
         NavigationHelper.navigateTo(context, ProductDetail(product: widget.product,));
@@ -101,22 +108,35 @@ class _ProductItemScreenState extends State<ProductItemScreen> {
                       color: AppColors.textColor,
                     ),
                   ),
-                  GestureDetector(
-                    child: Container(
-                      width: 45.67,
-                      height: 45.67,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: AppColors.primaryColor,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.add,
-                          color: AppColors.whiteColor,
+                  Consumer<CartProvider>(builder: (context,cartProvider,child){
+                    return GestureDetector(
+                      onTap: (){
+                        final cart = Cart(
+                            id: Random().nextInt(1000000).toString(),
+                            productId: widget.product.id,
+                            quantity: 1,
+                            dateCreated: DateTime.now().toString(),
+                            uid: user!.uid);
+                        setState(() {
+                          cartProvider.addToCart(cart);
+                        });
+                      },
+                      child: Container(
+                        width: 45.67,
+                        height: 45.67,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: AppColors.primaryColor,
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.add,
+                            color: AppColors.whiteColor,
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ],
               ),
             ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:groceries_app/constants/colors.dart';
 import 'package:groceries_app/models/categories.dart';
+import 'package:groceries_app/providers/category_provider.dart';
 import 'package:groceries_app/screens/explore/screens/explore_detail.dart';
 import 'package:groceries_app/widgets/navigator.dart';
+import 'package:provider/provider.dart';
 
 import '../homes/widgets/search.dart';
 
@@ -15,22 +17,18 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   @override
+  void initState() {
+    super.initState();
+    // Gọi fetchCategory() để lấy dữ liệu
+    final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    categoryProvider.fetchCategory();
+  }
+
+  @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
-    final List<Categories> categories = [
-      Categories(
-          name: "Frash Fruits & Vegetable",
-          icon: "assets/images/category1.png"),
-      Categories(
-          name: "Cooking Oil & Ghee", icon: "assets/images/category2.png"),
-      Categories(name: "Meat & Fish", icon: "assets/images/category3.png"),
-      Categories(name: "Bakery & Snacks", icon: "assets/images/category4.png"),
-      Categories(name: "Dairy & Eggs", icon: "assets/images/category5.png"),
-      Categories(name: "Beverages", icon: "assets/images/category6.png"),
-      Categories(name: "Rice", icon: "assets/images/rice.png"),
-      Categories(name: "Pulses", icon: "assets/images/pulses.png"),
-    ];
+    final categoryProvider = Provider.of<CategoryProvider>(context);
 
     final List<Map<String, Color>> categoryColors = [
       {'color': const Color(0xFF53B175).withOpacity(0.2), 'border': const Color(0xFF53B175)},
@@ -77,21 +75,21 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   mainAxisSpacing: 15,
                   crossAxisSpacing: 15,
                 ),
-                itemCount: categories.length,
+                itemCount: categoryProvider.categories.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      NavigationHelper.navigateTo(context, ExploreDetail());
+                      NavigationHelper.navigateTo(context, ExploreDetail(categoryId: categoryProvider.categories[index].id,));
                     },
                     child: Container(
                       width: size.width * 0.42,
                       height: size.height * 0.21,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: categoryColors[index]['color'],
+                        color: categoryColors[index % categoryColors.length]['color'],
                         border: Border.all(
                           width: 1,
-                          color: categoryColors[index]['border']!,
+                          color: categoryColors[index % categoryColors.length]['border']!,
                         ),
                       ),
                       child: Column(
@@ -103,8 +101,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             child: SizedBox(
                               width: 111,
                               height: 74,
-                              child: Image.asset(
-                                categories[index].icon,
+                              child: Image.network(
+                                categoryProvider.categories[index].icon,
                                 fit: BoxFit.contain,
                               ),
                             ),
@@ -113,14 +111,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             height: 10,
                           ),
                           Text(
-                            categories[index].name,
+                            categoryProvider.categories[index].name,
                             style: const TextStyle(
                               fontSize: 16,
                               color: AppColors.textColor,
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
-                          )
+                          ),
                         ],
                       ),
                     ),

@@ -1,10 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:groceries_app/constants/colors.dart';
+import 'package:groceries_app/models/cart.dart';
 import 'package:groceries_app/models/product.dart';
+import 'package:groceries_app/providers/cart_provider.dart';
 import 'package:groceries_app/providers/favorite_provider.dart';
-import 'package:groceries_app/providers/product_provider.dart';
 import 'package:groceries_app/widgets/button.dart';
 import 'package:groceries_app/widgets/navigator.dart';
 import 'package:provider/provider.dart';
@@ -19,12 +22,14 @@ class ProductDetail extends StatefulWidget {
 }
 
 class _ProductDetailState extends State<ProductDetail> {
+  User? user = FirebaseAuth.instance.currentUser;
   int _currentImage = 0;
   bool _isExpanded = false;
   bool _isNutritrion = false;
 
   bool _isFavorite = false;
   bool _isLoading = true;
+  int initialQuantity = 1;
 
   @override
   void initState() {
@@ -34,7 +39,7 @@ class _ProductDetailState extends State<ProductDetail> {
 
   Future<void> _checkIfFavorite() async {
     final favoriteProvider =
-        Provider.of<FavoriteProvider>(context, listen: false);
+    Provider.of<FavoriteProvider>(context, listen: false);
     bool isFavorite = await favoriteProvider.isFavorite(widget.product.id);
     setState(() {
       _isFavorite = isFavorite;
@@ -44,15 +49,27 @@ class _ProductDetailState extends State<ProductDetail> {
 
   Future<void> _toggleFavorite() async {
     final favoriteProvider =
-        Provider.of<FavoriteProvider>(context, listen: false);
+    Provider.of<FavoriteProvider>(context, listen: false);
     await favoriteProvider.toggleFavorite(widget.product.id);
     setState(() {
       _isFavorite = !_isFavorite;
     });
   }
 
+  void showToastMessage() =>
+      Fluttertoast.showToast(
+        msg: 'Add to cart success!',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.TOP,
+        timeInSecForIosWeb: 1,
+        backgroundColor: AppColors.primaryColor,
+        textColor: AppColors.whiteColor,
+        fontSize: 16,
+      );
+
   @override
   Widget build(BuildContext context) {
+    final cartProvider = Provider.of<CartProvider>(context);
     return Scaffold(
       body: Column(
         children: [
@@ -60,8 +77,27 @@ class _ProductDetailState extends State<ProductDetail> {
           _productContent(),
           Padding(
             padding:
-                const EdgeInsets.only(top: 20, left: 25, right: 25, bottom: 38),
-            child: Button(nameButton: "Add To Basket", buttonPressEvent: () {}),
+            const EdgeInsets.only(top: 20, left: 25, right: 25, bottom: 38),
+            child: Button(
+                nameButton: "Add To Basket",
+                buttonPressEvent: () async {
+                  final cart = Cart(
+                      id: Random().nextInt(1000000).toString(),
+                      productId: widget.product.id,
+                      quantity: initialQuantity,
+                      dateCreated: DateTime.now().toString(),
+                      uid: user!.uid);
+                  await cartProvider.addToCart(cart);
+                  Fluttertoast.showToast(
+                    msg: "Add To Cart Success!",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.TOP,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.green,
+                    textColor: Colors.white,
+                    fontSize: 16.0,
+                  );
+                }),
           ),
         ],
       ),
@@ -69,9 +105,9 @@ class _ProductDetailState extends State<ProductDetail> {
   }
 
   Widget _productContent() {
-    final favoriteProvider =
-        Provider.of<FavoriteProvider>(context, listen: false);
-    Size size = MediaQuery.of(context).size;
+    Size size = MediaQuery
+        .of(context)
+        .size;
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -140,7 +176,13 @@ class _ProductDetailState extends State<ProductDetail> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            setState(() {
+                              if(initialQuantity > 1){
+                                initialQuantity--;
+                              }
+                            });
+                          },
                           splashColor: Colors.transparent,
                           highlightColor: Colors.transparent,
                           icon: const Icon(Icons.remove),
@@ -155,10 +197,10 @@ class _ProductDetailState extends State<ProductDetail> {
                               color: AppColors.subtextColor.withOpacity(0.5),
                             ),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              '1',
-                              style: TextStyle(
+                              initialQuantity.toString(),
+                              style: const TextStyle(
                                 fontSize: 18,
                                 color: AppColors.textColor,
                               ),
@@ -166,7 +208,11 @@ class _ProductDetailState extends State<ProductDetail> {
                           ),
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            setState(() {
+                              initialQuantity++;
+                            });
+                          },
                           splashColor: Colors.transparent,
                           highlightColor: Colors.transparent,
                           icon: const Icon(
@@ -341,85 +387,86 @@ class _ProductDetailState extends State<ProductDetail> {
     );
   }
 
-  Widget _headerDetail() {
-    Size size = MediaQuery.of(context).size;
-    final List<String> imageUrl = List<String>.from(widget.product.images);
+Widget _headerDetail() {
+  Size size = MediaQuery
+      .of(context)
+      .size;
+  final List<String> imageUrl = List<String>.from(widget.product.images);
 
-    return Container(
-      width: double.infinity,
-      height: size.height * 0.414,
-      decoration: const BoxDecoration(
-          color: Color(0xFFF2F3F2),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(20),
-            bottomRight: Radius.circular(20),
-          )),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 57,
-            left: 25,
-            child: IconButton(
-              onPressed: () {
-                NavigationHelper.pop(context);
+  return Container(
+    width: double.infinity,
+    height: size.height * 0.414,
+    decoration: const BoxDecoration(
+        color: Color(0xFFF2F3F2),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        )),
+    child: Stack(
+      children: [
+        Positioned(
+          top: 57,
+          left: 25,
+          child: IconButton(
+            onPressed: () {
+              NavigationHelper.pop(context);
+            },
+            icon: const Icon(Icons.arrow_back_ios_rounded),
+          ),
+        ),
+        Positioned(
+          top: 57,
+          right: 25,
+          child: IconButton(
+            onPressed: () {},
+            icon: SvgPicture.asset('assets/icons/icon_share.svg'),
+          ),
+        ),
+        Positioned(
+          top: 102,
+          left: 42,
+          child: SizedBox(
+            width: size.width * 0.79,
+            height: size.height * 0.22,
+            child: PageView.builder(
+              onPageChanged: (index) {
+                setState(() {
+                  _currentImage = index;
+                });
               },
-              icon: const Icon(Icons.arrow_back_ios_rounded),
-            ),
-          ),
-          Positioned(
-            top: 57,
-            right: 25,
-            child: IconButton(
-              onPressed: () {},
-              icon: SvgPicture.asset('assets/icons/icon_share.svg'),
-            ),
-          ),
-          Positioned(
-            top: 102,
-            left: 42,
-            child: SizedBox(
-              width: size.width * 0.79,
-              height: size.height * 0.22,
-              child: PageView.builder(
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentImage = index;
-                  });
-                },
-                itemCount: imageUrl.length,
-                itemBuilder: (context, index) {
-                  return Image.network(
-                    imageUrl[index],
-                    fit: BoxFit.scaleDown,
-                  );
-                },
-              ),
-            ),
-          ),
-          Positioned(
-            top: size.height * 0.375,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(imageUrl.length, (index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: Container(
-                    width: _currentImage == index ? 15 : 3,
-                    height: 3,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(2),
-                        color: _currentImage == index
-                            ? AppColors.primaryColor
-                            : Colors.grey),
-                  ),
+              itemCount: imageUrl.length,
+              itemBuilder: (context, index) {
+                return Image.network(
+                  imageUrl[index],
+                  fit: BoxFit.scaleDown,
                 );
-              }),
+              },
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
+        ),
+        Positioned(
+          top: size.height * 0.375,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(imageUrl.length, (index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Container(
+                  width: _currentImage == index ? 15 : 3,
+                  height: 3,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      color: _currentImage == index
+                          ? AppColors.primaryColor
+                          : Colors.grey),
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
+    ),
+  );
+}}

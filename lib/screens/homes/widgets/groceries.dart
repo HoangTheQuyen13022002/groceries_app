@@ -83,8 +83,8 @@ class _GroceriesState extends State<Groceries> {
   Widget _GroceriesCategories() {
     Size size = MediaQuery.of(context).size;
     final List<Categories> categories = [
-      Categories(name: "Pulses", icon: "assets/images/pulses.png"),
-      Categories(name: "Rice", icon: "assets/images/rice.png"),
+      Categories(name: "Pulses", icon: "assets/images/pulses.png", id: '7'),
+      Categories(name: "Rice", icon: "assets/images/rice.png", id: '8'),
     ];
 
     final List<Color>  catrgoryColor = [

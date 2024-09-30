@@ -22,12 +22,6 @@ class BottomNavigationBarScreen extends StatelessWidget {
       onTap: (int index) {
         _onTap(index: index);
       },
-      selectedLabelStyle: TextStyle(
-        color: AppColors.primaryColor, // Màu cho label được chọn
-      ),
-      unselectedLabelStyle: TextStyle(
-        color: AppColors.textColor, // Màu cho label không được chọn
-      ),
       items: MainTab.values
           .map((MainTab maintab) => _bottomNavigationBarItem(mainTab: maintab))
           .toList(),
@@ -37,12 +31,13 @@ class BottomNavigationBarScreen extends StatelessWidget {
   BottomNavigationBarItem _bottomNavigationBarItem({required MainTab mainTab}) {
     return BottomNavigationBarItem(
       icon: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(0),
         child: selectedMainTab == mainTab
             ? mainTab.selectedIcon
             : mainTab.unselectedIcon,
       ),
-      label: mainTab.lable, // Chỉ cần lấy label từ mainTab
+      label : '',
+      // label: mainTab.lable, // Chỉ cần lấy label từ mainTab
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:groceries_app/constants/colors.dart';
 import 'package:groceries_app/providers/favorite_provider.dart';
 import 'package:groceries_app/widgets/button.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../models/favorite.dart';
 import '../../models/product.dart';
@@ -47,7 +48,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           } else if (snapshot.hasError) {
             return const Center(child: Text('Đã xảy ra lỗi!'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('Không có sản phẩm yêu thích.'));
+            return Center(child: Lottie.asset('assets/icons/heart_animation.json'));
           }
 
           List<Favorite> favorites = snapshot.data!;
@@ -64,7 +65,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                       // Find the matching product by productId
                       Product? product = productProvider.products.firstWhere(
                             (prod) => prod.id == favorite.productId,
-                        orElse: () => Product(id: '', name: '', description: '', images: [], nutrients: '', price: 0, unit: ''
+                        orElse: () => Product(id: '', name: '', description: '', images: [],
+                            nutrients: '', price: 0, unit: ''
                             '', star: 0, category: ''),
                       );
 
