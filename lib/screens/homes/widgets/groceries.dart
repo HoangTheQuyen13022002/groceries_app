@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:groceries_app/models/categories.dart';
+import 'package:provider/provider.dart';
 import '../../../constants/colors.dart';
+import '../../../providers/product_provider.dart';
 import '../../../widgets/product_item_screen.dart';
 
 class Groceries extends StatefulWidget {
@@ -12,8 +14,13 @@ class Groceries extends StatefulWidget {
 }
 
 class _GroceriesState extends State<Groceries> {
+  void initState() {
+    super.initState();
+    Provider.of<ProductProvider>(context, listen: false).fetchProducts();
+  }
   @override
   Widget build(BuildContext context) {
+    final productProvider = Provider.of<ProductProvider>(context);
     Size size = MediaQuery.of(context).size;
 
     return Padding(
@@ -60,11 +67,11 @@ class _GroceriesState extends State<Groceries> {
               width: double.infinity,
               child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 4,
+                  itemCount: productProvider.products.length,
                   itemBuilder: (content, index) {
-                    return const Padding(
+                    return Padding(
                       padding: EdgeInsets.only(right: 15.05),
-                      child: ProductItemScreen(),
+                      child: ProductItemScreen(product: productProvider.products[index],),
                     );
                   }),
           ),

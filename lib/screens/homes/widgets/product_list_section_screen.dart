@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:groceries_app/constants/colors.dart';
+import 'package:groceries_app/models/product.dart';
 import 'package:groceries_app/widgets/product_item_screen.dart';
+import 'package:provider/provider.dart';
+
+import '../../../providers/product_provider.dart';
 
 class ProductListSectionScreen extends StatefulWidget {
   const ProductListSectionScreen({
@@ -17,14 +21,20 @@ class ProductListSectionScreen extends StatefulWidget {
 
 class _ProductListSectionScreenState extends State<ProductListSectionScreen> {
   @override
+  void initState() {
+    super.initState();
+    Provider.of<ProductProvider>(context, listen: false).fetchProducts();
+  }
+  @override
   Widget build(BuildContext context) {
+    final productProvider = Provider.of<ProductProvider>(context);
     Size size = MediaQuery.of(context).size;
 
     return Padding(
-      padding: EdgeInsets.only(left: 24.71),
+      padding: const EdgeInsets.only(left: 24.71),
       child: SizedBox(
         width: double.infinity,
-        height: size.height * 0.3022,
+        height: size.height * 0.34,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,11 +73,12 @@ class _ProductListSectionScreenState extends State<ProductListSectionScreen> {
                 width: double.infinity,
                 child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: 4,
+                    itemCount: productProvider.products.length,
                     itemBuilder: (content, index) {
-                      return const Padding(
-                        padding: EdgeInsets.only(right: 15.05),
-                        child: ProductItemScreen(),
+                      Product product = productProvider.products[index];
+                      return  Padding(
+                        padding: const EdgeInsets.only(right: 15.05),
+                        child: ProductItemScreen(product: product,),
                       );
                     }),
               ),

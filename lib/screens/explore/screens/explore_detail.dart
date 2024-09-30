@@ -47,7 +47,8 @@ class ExploreDetail extends StatelessWidget {
               childAspectRatio: 0.8),
           itemCount: 10,
           itemBuilder: (context, index) {
-            return const ProductItemScreen();
+            // return ProductItemScreen();
+            return Container();
           },
         ),
       ),

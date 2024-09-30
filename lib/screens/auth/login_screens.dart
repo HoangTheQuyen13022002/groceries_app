@@ -17,6 +17,7 @@ class LoginScreens extends StatefulWidget {
 }
 
 class _LoginScreensState extends State<LoginScreens> {
+  final AuthProviders _authProviders = AuthProviders();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
 
@@ -101,11 +102,9 @@ class _LoginScreensState extends State<LoginScreens> {
                 height: size.height * 0.03,
               ),
               Button(nameButton: 'Log In', buttonPressEvent: () async{
-                try{
-                  await authProvider.signIn(_emailController.text, _passwordController.text);
+                User? user = await _authProviders.signIn(_emailController.text, _passwordController.text);
+                if(user != null){
                   NavigationHelper.navigateTo(context, MainScreen());
-                } catch(e){
-                  print(e);
                 }
               }),
               SizedBox(

@@ -1,11 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:groceries_app/constants/colors.dart';
+import 'package:groceries_app/models/product.dart';
+import 'package:groceries_app/providers/favorite_provider.dart';
+import 'package:groceries_app/providers/product_provider.dart';
 import 'package:groceries_app/widgets/button.dart';
 import 'package:groceries_app/widgets/navigator.dart';
+import 'package:provider/provider.dart';
 
 class ProductDetail extends StatefulWidget {
-  const ProductDetail({super.key});
+  const ProductDetail({super.key, required this.product});
+
+  final Product product;
 
   @override
   State<ProductDetail> createState() => _ProductDetailState();
@@ -14,6 +21,35 @@ class ProductDetail extends StatefulWidget {
 class _ProductDetailState extends State<ProductDetail> {
   int _currentImage = 0;
   bool _isExpanded = false;
+  bool _isNutritrion = false;
+
+  bool _isFavorite = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfFavorite();
+  }
+
+  Future<void> _checkIfFavorite() async {
+    final favoriteProvider =
+        Provider.of<FavoriteProvider>(context, listen: false);
+    bool isFavorite = await favoriteProvider.isFavorite(widget.product.id);
+    setState(() {
+      _isFavorite = isFavorite;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    final favoriteProvider =
+        Provider.of<FavoriteProvider>(context, listen: false);
+    await favoriteProvider.toggleFavorite(widget.product.id);
+    setState(() {
+      _isFavorite = !_isFavorite;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +69,8 @@ class _ProductDetailState extends State<ProductDetail> {
   }
 
   Widget _productContent() {
+    final favoriteProvider =
+        Provider.of<FavoriteProvider>(context, listen: false);
     Size size = MediaQuery.of(context).size;
     return Expanded(
       child: Padding(
@@ -47,22 +85,44 @@ class _ProductDetailState extends State<ProductDetail> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Naturel Red Apple',
-                    style: TextStyle(
+                  Text(
+                    widget.product.name,
+                    style: const TextStyle(
                       fontSize: 24,
                       color: AppColors.textColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.favorite_border_outlined))
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            try {
+                              await _toggleFavorite();
+                              ScaffoldMessenger.of(context);
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text('Failed to update favorite: $e')),
+                              );
+                            }
+                          },
+                    icon: _isLoading
+                        ? Icon(Icons.favorite)
+                        : Icon(
+                            Icons.favorite,
+                            color: _isFavorite
+                                ? Colors.red
+                                : Colors
+                                    .grey,
+                          ),
+                  ),
                 ],
               ),
-              const Text(
-                '1kg, Price',
-                style: TextStyle(
+              Text(
+                '${widget.product.unit}, Price',
+                style: const TextStyle(
                   fontSize: 16,
                   color: AppColors.subtextColor,
                 ),
@@ -117,9 +177,9 @@ class _ProductDetailState extends State<ProductDetail> {
                       ],
                     ),
                   ),
-                  const Text(
-                    '\$4.99',
-                    style: TextStyle(
+                  Text(
+                    '\$${widget.product.price}',
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textColor,
@@ -165,9 +225,9 @@ class _ProductDetailState extends State<ProductDetail> {
                     ],
                   ),
                   _isExpanded
-                      ? const Text(
-                          'Apples are nutritious. Apples may be good for weight loss. apples may be good for your heart. As part of a healtful and varied diet. Apples are nutritious. Apples may be good for weight loss. apples may be good for your heart. As part of a healtful and varied diet.',
-                          style: TextStyle(
+                      ? Text(
+                          widget.product.description,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.subtextColor,
                           ),
@@ -186,34 +246,41 @@ class _ProductDetailState extends State<ProductDetail> {
               SizedBox(
                 height: size.height * 0.018,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Nutritions",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.textColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    height: 22,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(2),
-                      color: const Color(0xFFE4E4E4),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '100gr',
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Nutritions",
                         style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.subtextColor,
+                          fontSize: 16,
+                          color: AppColors.textColor,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _isNutritrion = !_isNutritrion;
+                          });
+                        },
+                        icon: Icon(_isNutritrion
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down),
+                      ),
+                    ],
                   ),
+                  _isNutritrion
+                      ? Text(
+                          widget.product.nutrients,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.subtextColor,
+                          ),
+                        )
+                      : Container(),
                 ],
               ),
               SizedBox(
@@ -239,10 +306,32 @@ class _ProductDetailState extends State<ProductDetail> {
                     ),
                   ),
                   Row(
-                    children: List.generate(5, (index){
-                      return Padding(padding: EdgeInsets.all(4),child:SvgPicture.asset('assets/icons/star.svg') ,);
+                    children: List.generate(5, (index) {
+                      if (index < widget.product.star.floor()) {
+                        // Hiển thị sao đầy cho các giá trị nguyên
+                        return Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: SvgPicture.asset(
+                              'assets/icons/star.svg'), // Sao đầy
+                        );
+                      } else if (index == widget.product.star.floor() &&
+                          widget.product.star % 1 >= 0.5) {
+                        // Hiển thị sao một nửa nếu giá trị có phần thập phân
+                        return Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: SvgPicture.asset(
+                              'assets/icons/star_half.svg'), // Sao một nửa
+                        );
+                      } else {
+                        // Hiển thị sao rỗng
+                        return Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: SvgPicture.asset(
+                              'assets/icons/star_empty.svg'), // Sao rỗng
+                        );
+                      }
                     }),
-                  )
+                  ),
                 ],
               ),
             ],
@@ -254,11 +343,7 @@ class _ProductDetailState extends State<ProductDetail> {
 
   Widget _headerDetail() {
     Size size = MediaQuery.of(context).size;
-    final List<String> imageUrl = [
-      "assets/images/apple.png",
-      "assets/images/apple2.jpg",
-      "assets/images/apple3.jpg",
-    ];
+    final List<String> imageUrl = List<String>.from(widget.product.images);
 
     return Container(
       width: double.infinity,
@@ -303,9 +388,9 @@ class _ProductDetailState extends State<ProductDetail> {
                 },
                 itemCount: imageUrl.length,
                 itemBuilder: (context, index) {
-                  return Image.asset(
+                  return Image.network(
                     imageUrl[index],
-                    fit: BoxFit.cover,
+                    fit: BoxFit.scaleDown,
                   );
                 },
               ),
